@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Asistente de normativa</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f4f3ee;color:#2c2c2a;display:flex;flex-direction:column;height:100vh}
+header{background:#185fa5;color:#fff;padding:14px 18px}header b{font-size:18px}header div{font-size:13px;opacity:.85}
+#log{flex:1;overflow:auto;padding:16px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box}
+.m{padding:10px 14px;border-radius:12px;margin:8px 0;max-width:88%;white-space:pre-wrap;line-height:1.5}
+.u{background:#185fa5;color:#fff;margin-left:auto}.a{background:#fff;border:1px solid #d3d1c7}
+form{display:flex;gap:8px;padding:12px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box}
+input{flex:1;padding:12px;border:1px solid #b4b2a9;border-radius:10px;font-size:16px}
+button{background:#185fa5;color:#fff;border:0;border-radius:10px;padding:0 20px;font-size:16px}button:disabled{opacity:.5}
+small{display:block;text-align:center;color:#5f5e5a;padding:0 12px 10px}
+</style></head><body>
+<header><b>Asistente de normativa</b><div>Pregunta sobre el reglamento de construcción cargado</div></header>
+<div id="log"><div class="m a">Hola. Pregúntame algo del reglamento, por ejemplo: "¿Cuál es el ancho mínimo de una escalera en vivienda?"</div></div>
+<form id="f"><input id="q" placeholder="Escribe tu pregunta..." autocomplete="off" required><button id="b">Enviar</button></form>
+<small>Respuestas generadas por IA. Confirma siempre el dato en el texto oficial.</small>
+<script>
+const log=document.getElementById('log'),q=document.getElementById('q'),b=document.getElementById('b');let hist=[];
+function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=q.value.trim();if(!t)return;q.value='';b.disabled=true;
+add(t,'u');hist.push({role:'user',text:t});const w=add('Buscando en el reglamento...','a');
+try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-6)})});
+const j=await r.json();w.textContent=j.answer||j.error||'Error inesperado';if(j.answer)hist.push({role:'model',text:j.answer})}
+catch(x){w.textContent='No se pudo conectar con el servidor.'}b.disabled=false;q.focus()};
+</script></body></html>
