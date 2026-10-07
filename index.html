@@ -23,4 +23,5 @@ add(t,'u');hist.push({role:'user',text:t});const w=add('Buscando en el reglament
 try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-6)})});
 const j=await r.json();w.textContent=j.answer||j.error||'Error inesperado';if(j.answer)hist.push({role:'model',text:j.answer})}
 catch(x){w.textContent='No se pudo conectar con el servidor.'}b.disabled=false;q.focus()};
+const pq=new URLSearchParams(location.search).get('q');if(pq){q.value=pq;document.getElementById('f').requestSubmit()}
 </script></body></html>
