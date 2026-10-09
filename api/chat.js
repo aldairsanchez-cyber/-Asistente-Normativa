@@ -35,6 +35,8 @@ function limpiar(msgs) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+  const KEY = (process.env.ANTHROPIC_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+  if (!KEY) return res.status(500).json({ error: 'Este despliegue no tiene la variable ANTHROPIC_API_KEY. En Vercel, Settings > Environment Variables: marca Production y Preview, guarda y haz Redeploy.' });
   try {
     const raw = (req.body.messages || []).slice(-6);
     const msgs = limpiar(raw);
@@ -46,12 +48,12 @@ module.exports = async (req, res) => {
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: MODEL, max_tokens: 1024, stream: true, system: SYSTEM, messages: msgs })
     });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
-      const msg = r.status === 401 ? 'La clave de API no es válida.' : r.status === 429 ? 'Demasiadas consultas seguidas. Espera unos segundos.' : (j.error?.message || 'Error del modelo');
+      const msg = r.status === 401 ? `Claude rechazó la clave. La clave que llegó empieza con "${KEY.slice(0, 7)}" y tiene ${KEY.length} caracteres. Debe empezar con sk-ant- y ser larga; si no, copia de nuevo la clave desde la consola de Anthropic.` : r.status === 429 ? 'Demasiadas consultas seguidas. Espera unos segundos.' : (j.error?.message || 'Error del modelo');
       return res.status(r.status).json({ error: msg });
     }
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
