@@ -17,11 +17,13 @@ small{display:block;text-align:center;color:#5f5e5a;padding:0 12px 10px}
 <small>Respuestas generadas por IA. Confirma siempre el dato en el texto oficial.</small>
 <script>
 const log=document.getElementById('log'),q=document.getElementById('q'),b=document.getElementById('b');let hist=[];
+const fmt=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=q.value.trim();if(!t)return;q.value='';b.disabled=true;
 add(t,'u');hist.push({role:'user',text:t});const w=add('Buscando en el reglamento...','a');
 try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist.slice(-6)})});
-const j=await r.json();w.textContent=j.answer||j.error||'Error inesperado';if(j.answer)hist.push({role:'model',text:j.answer})}
+if(!r.ok||(r.headers.get('content-type')||'').includes('json')){const j=await r.json();w.textContent=j.error||'Error inesperado'}
+else{const rd=r.body.getReader(),dc=new TextDecoder();let t='';w.textContent='';while(true){const{done,value}=await rd.read();if(done)break;t+=dc.decode(value,{stream:true});w.innerHTML=fmt(t);log.scrollTop=log.scrollHeight}hist.push({role:'model',text:t})}}
 catch(x){w.textContent='No se pudo conectar con el servidor.'}b.disabled=false;q.focus()};
 const pq=new URLSearchParams(location.search).get('q');if(pq){q.value=pq;document.getElementById('f').requestSubmit()}
 </script></body></html>
